@@ -81,7 +81,7 @@ const VideoDetail = () => {
         <Box flex={1}>
           <Box sx={{ width: "100%", position: "sticky", top: "86px" }}>
             {/* Video chính */}
-            <ReactPlayer url={source} className="react-player" controls />
+            <ReactPlayer url={source.startsWith("http") ? source : `http://localhost:8080/${source}`} className="react-player" controls />
             <Typography color="#fff" variant="h5" fontWeight="bold" p={2}>
               {video_name}
             </Typography>

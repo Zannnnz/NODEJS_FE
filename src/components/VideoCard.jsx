@@ -10,7 +10,7 @@ const VideoCard = ({ video: { video_id, video_name, thumbnail, channelId, channe
 
   return <Card sx={{ width: { xs: '100%', sm: '358px', md: "320px", }, boxShadow: "none", borderRadius: 0 }}>
     <Link to={video_id ? `/video/${video_id}` : `/video/cV2gBU6hKfY`}>
-      <CardMedia image={thumbnail} alt={video_name}
+      <CardMedia   image={thumbnail.startsWith("http") ? thumbnail : `http://localhost:8080/${thumbnail}`} alt={video_name}
         sx={{ width: { xs: '100%', sm: '358px' }, height: 180 }}
       />
     </Link>

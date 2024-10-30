@@ -3,35 +3,34 @@ import { jwtDecode } from "jwt-decode";
 import { io } from 'socket.io-client';
 import { getUserAPI } from '../utils/fetchFromAPI';
 
-// Tạo đối tượng client cho FE
+// tạo đối tượng client cho FE
 const socket = io("ws://localhost:8080");
 
 const Footer = () => {
-
     const showChat = (show) => {
         document.querySelector("#formChat").style.display = show;
-    }
+    };
+
     const [drawer, setDrawer] = useState(0);
     const [user, setUser] = useState([]);
     const [toUserId, setToUserId] = useState(0);
     const [dataChat, setDataChat] = useState([]);
 
-    // Nhận event từ server
+    // nhận event từ server
     useEffect(() => {
         getUserAPI()
             .then((result) => {
                 setUser(result);
             })
-            .catch();
-
-    }, [])
+            .catch((error) => console.error(error));
+    }, []);
 
     useEffect(() => {
         socket.on("sv-send-mess", ({ user_id, content }) => {
             let newData = [...dataChat];
             newData.push({ user_id, content });
             setDataChat(newData);
-        })
+        });
     }, [dataChat]);
 
     return (
@@ -50,19 +49,19 @@ const Footer = () => {
                     </button>
                 </div>
                 <ol className="discussion" id="chat-noiDung">
-                    {dataChat?.map((item) => {
-                        // Lấy token từ local storage
+                    {dataChat.map((item, index) => {
+                        // lấy token từ local storage
                         let userLogin = localStorage.getItem("LOGIN_USER");
 
-                        // Decode token để lấy user_id
+                        // decode token để lấy user_id
                         let userInfo = userLogin ? jwtDecode(userLogin) : null;
                         let user_id = userInfo?.payload?.userId;
 
                         if (user_id === item.user_id) {
                             return (
-                                <li className="self">
+                                <li className="self" key={index}>
                                     <div className="avatar">
-                                        <img src="http://dergipark.org.tr/assets/app/images/buddy_sample.png" alt="avatar"/>
+                                        <img src="http://dergipark.org.tr/assets/app/images/buddy_sample.png" />
                                     </div>
                                     <div className="messages">
                                         {item.content}
@@ -73,9 +72,9 @@ const Footer = () => {
                             );
                         } else {
                             return (
-                                <li className="other">
+                                <li className="other" key={index}>
                                     <div className="avatar">
-                                        <img src="http://dergipark.org.tr/assets/app/images/buddy_sample.png" alt="avatar"/>
+                                        <img src="http://dergipark.org.tr/assets/app/images/buddy_sample.png" />
                                     </div>
                                     <div className="messages">
                                         {item.content}
@@ -88,18 +87,18 @@ const Footer = () => {
                     })}
                 </ol>
                 <div className="chatBottom">
-                    <input id="txt-chat" className="sentText" type="text" placeholder="Your Text" 
-                        style={{ flex: 1, border: '1px solid #0374d8', borderRadius: 20, padding: '0 20px' }} />
-
+                    <input id="txt-chat" className="sentText" type="text" placeholder="Your Text" style={{ flex: 1, border: '1px solid #0374d8', borderRadius: 20, padding: '0 20px' }} />
                     <button id="btn-send" onClick={() => {
+                        // lấy user_id từ access token (local storage)
                         let userLogin = localStorage.getItem("LOGIN_USER");
-
+                        // decode token
                         let userInfo = userLogin ? jwtDecode(userLogin) : null;
                         console.log(userInfo);
 
                         let user_id = userInfo?.payload?.userId;
                         let content = document.getElementById("txt-chat").value;
 
+                        // send event cho server
                         socket.emit("send-mess", { user_id, content });
                     }} type="button" className="sendbtn" aria-label="Close">
                         <span aria-hidden="true"><i className="fa-regular fa-paper-plane"></i></span>
@@ -115,7 +114,7 @@ const Footer = () => {
                             width={40}
                             src={item.avatar && item.avatar.startsWith('http://')
                                 ? item.avatar
-                                : `http://localhost:8080/${item.avatar || 'default_avatar.png'}`}
+                                : `http://localhost:8080/${item.avatar || 'default-avatar.png'}`}
                             alt={item.full_name}
                             style={{ marginRight: 10 }}
                         />

@@ -35,6 +35,7 @@ const InfoUser = () => {
         localStorage.setItem("USER_AVATAR", avatarUrl);
         setFullName(result.full_name);
         setEmail(result.email);
+
       })
       .catch((error) => {
         console.log(error);
@@ -107,12 +108,17 @@ const InfoUser = () => {
   };
 
   const handleUpdateUser = async () => {
+    if (!password) {
+      toast.error("Password is required.");
+      return;
+    }
+  
     const payload = {
       full_name: fullName,
       pass_word: password,
       email: email,
     };
-
+  
     try {
       const result = await updateUser(id, payload);
       if (result && result.message) {
@@ -130,7 +136,7 @@ const InfoUser = () => {
       console.error("Update user error:", error);
     }
   };
-
+  
   const handleThumbnailChange = (e) => {
     const file = e.target.files[0];
     if (file) {

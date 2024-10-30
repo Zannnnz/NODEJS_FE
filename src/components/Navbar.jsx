@@ -4,37 +4,45 @@ import { logo } from "../utils/constants";
 import { SearchBar } from "./";
 import {jwtDecode} from "jwt-decode"; // Sửa lại import nếu có lỗi
 import { useEffect, useState } from "react";
+import { detailUser } from "../utils/fetchFromAPI"; // Giả sử có hàm này để lấy chi tiết người dùng từ API
 
 const Navbar = () => {
+  const defaultAvatar = "http://dergipark.org.tr/assets/app/images/buddy_sample.png";
   const navigate = useNavigate();
-  const [avatar, setAvatar] = useState(localStorage.getItem("USER_AVATAR") || logo); // Sử dụng avatar từ localStorage
+  const [avatar, setAvatar] = useState(localStorage.getItem("USER_AVATAR") || defaultAvatar); // Đặt logo mặc định khi chưa có avatar
   const userLogin = localStorage.getItem("LOGIN_USER");
   const userInfo = userLogin ? jwtDecode(userLogin) : null;
-  const user_id = userInfo?.payload?.userId; // Lấy ID người dùng từ token
+  const user_id = userInfo?.payload?.userId;
 
   useEffect(() => {
-    const storedAvatar = localStorage.getItem("USER_AVATAR");
-    if (storedAvatar) {
-      setAvatar(storedAvatar); // Cập nhật avatar khi có thay đổi trong localStorage
+    if (userLogin && user_id) {
+      // Lấy avatar từ database theo user_id
+      detailUser(user_id)
+        .then((data) => {
+          if (data.avatarUrl) {
+            localStorage.setItem("USER_AVATAR", data.avatarUrl); // Cập nhật avatar vào localStorage
+            setAvatar(data.avatarUrl); // Cập nhật state avatar
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching avatar:", error);
+          setAvatar(defaultAvatar); // Đặt avatar mặc định nếu xảy ra lỗi
+        });
+    } else {
+      setAvatar(defaultAvatar); // Nếu chưa đăng nhập, đặt avatar mặc định
     }
-  }, []);
+  }, [userLogin, user_id]);
 
   const handleLogout = () => {
-    localStorage.removeItem("LOGIN_USER"); // Xóa token người dùng
-    localStorage.removeItem("USER_AVATAR"); // Xóa avatar người dùng
-    setAvatar("http://dergipark.org.tr/assets/app/images/buddy_sample.png"); // Trả về logo mặc định
-    window.location.reload(); // Làm mới trang
+    localStorage.removeItem("LOGIN_USER"); // Xóa token
+    
+    navigate("/"); // Điều hướng về trang chủ
   };
 
   return (
     <Stack direction="row" alignItems="center" p={2} sx={{ background: '#000', top: 0, justifyContent: "space-between" }}>
       <Link to="/" style={{ display: "flex", alignItems: "center" }}>
-        <img
-          src={logo}
-          alt="logo"
-          height={45}
-          onClick={() => navigate("/")} // Điều hướng về trang chủ
-        />
+        <img src={logo} alt="logo" height={45} onClick={() => navigate("/")} />
       </Link>
       <SearchBar />
 
@@ -46,25 +54,16 @@ const Navbar = () => {
           </div>
         ) : (
           <div className="dropdown">
-            <Avatar
-              src={avatar}
-              type="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            />
+            <Avatar src={avatar} type="button" data-bs-toggle="dropdown" aria-expanded="false" />
             <ul className="dropdown-menu">
               <Link to={`channel/${user_id}`}>
-                <li><a className="dropdown-item" href="#">Kênh cá nhân</a></li>
+                <li className="dropdown-item">Kênh cá nhân</li>
               </Link>
               <Link to={`info/${user_id}`}>
-                <li><a className="dropdown-item" href="#">Upload video</a></li>
+                <li className="dropdown-item">Upload video</li>
               </Link>
               <li>
-                <a
-                  className="dropdown-item"
-                  href="#"
-                  onClick={handleLogout} // Gọi hàm handleLogout khi đăng xuất
-                >
+                <a className="dropdown-item" href="#" onClick={handleLogout}>
                   Đăng xuất
                 </a>
               </li>
@@ -74,6 +73,6 @@ const Navbar = () => {
       </div>
     </Stack>
   );
-}
+};
 
 export default Navbar;
