@@ -170,7 +170,7 @@ const InfoUser = () => {
             aria-controls="nav-profile"
             aria-selected="false"
           >
-            Update Video
+            Upload Video
           </button>
         </div>
       </nav>

@@ -2,41 +2,44 @@ import { Avatar, Stack } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import { logo } from "../utils/constants";
 import { SearchBar } from "./";
-import {jwtDecode} from "jwt-decode"; // Sửa lại import nếu có lỗi
+import { jwtDecode } from "jwt-decode"; // Ensure correct import
 import { useEffect, useState } from "react";
-import { detailUser } from "../utils/fetchFromAPI"; // Giả sử có hàm này để lấy chi tiết người dùng từ API
+import { detailUser } from "../utils/fetchFromAPI"; // Assuming this function retrieves user details from the API
 
 const Navbar = () => {
-  const defaultAvatar = "http://dergipark.org.tr/assets/app/images/buddy_sample.png";
   const navigate = useNavigate();
-  const [avatar, setAvatar] = useState(localStorage.getItem("USER_AVATAR") || defaultAvatar); // Đặt logo mặc định khi chưa có avatar
+  const [avatar, setAvatar] = useState("http://dergipark.org.tr/assets/app/images/buddy_sample.png"); // Default avatar
   const userLogin = localStorage.getItem("LOGIN_USER");
   const userInfo = userLogin ? jwtDecode(userLogin) : null;
-  const user_id = userInfo?.payload?.userId;
+  const user_id = userInfo?.payload?.userId; // Use the userId from token
 
   useEffect(() => {
-    if (userLogin && user_id) {
-      // Lấy avatar từ database theo user_id
+    if (user_id) {
+      // Fetch the avatar from the database using user_id
       detailUser(user_id)
         .then((data) => {
-          if (data.avatarUrl) {
-            localStorage.setItem("USER_AVATAR", data.avatarUrl); // Cập nhật avatar vào localStorage
-            setAvatar(data.avatarUrl); // Cập nhật state avatar
+          // Log the fetched data for debugging
+          console.log("User data fetched:", data);
+          
+          // Check if avatar exists and set it accordingly
+          if (data.avatar) {
+            const avatarUrl = `http://localhost:8080/${data.avatar}`;
+            setAvatar(avatarUrl);
+            localStorage.setItem("USER_AVATAR", avatarUrl); // Save avatar to localStorage
+          } else {
+            console.warn("Avatar not found in user data, using default avatar.");
           }
         })
         .catch((error) => {
           console.error("Error fetching avatar:", error);
-          setAvatar(defaultAvatar); // Đặt avatar mặc định nếu xảy ra lỗi
         });
-    } else {
-      setAvatar(defaultAvatar); // Nếu chưa đăng nhập, đặt avatar mặc định
     }
-  }, [userLogin, user_id]);
+  }, [user_id]);
 
   const handleLogout = () => {
-    localStorage.removeItem("LOGIN_USER"); // Xóa token
-    
-    navigate("/"); // Điều hướng về trang chủ
+    localStorage.removeItem("LOGIN_USER"); // Remove token
+    localStorage.removeItem("USER_AVATAR")
+    navigate("/"); // Navigate to home
   };
 
   return (
@@ -54,13 +57,23 @@ const Navbar = () => {
           </div>
         ) : (
           <div className="dropdown">
-            <Avatar src={avatar} type="button" data-bs-toggle="dropdown" aria-expanded="false" />
+            <Avatar 
+              src={avatar} 
+              alt="User Avatar" 
+              type="button" 
+              data-bs-toggle="dropdown" 
+              aria-expanded="false" 
+              onError={(e) => {
+                e.target.onerror = null; // Prevents looping
+                e.target.src = "http://dergipark.org.tr/assets/app/images/buddy_sample.png"; // Fallback to default avatar
+              }} 
+            />
             <ul className="dropdown-menu">
-              <Link to={`channel/${user_id}`}>
+              <Link to={`channel/${user_id}`} style={{ textDecoration: 'none' }}>
                 <li className="dropdown-item">Kênh cá nhân</li>
               </Link>
-              <Link to={`info/${user_id}`}>
-                <li className="dropdown-item">Upload video</li>
+              <Link to={`info/${user_id}`} style={{ textDecoration: 'none' }}>
+                <li className="dropdown-item">Update Info</li>
               </Link>
               <li>
                 <a className="dropdown-item" href="#" onClick={handleLogout}>
